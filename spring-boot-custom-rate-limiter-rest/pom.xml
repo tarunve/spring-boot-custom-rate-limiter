@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.spring.boot.rest</groupId>
+        <artifactId>spring-boot-custom-rate-limiter</artifactId>
+        <version>1.0</version>
+        <relativePath/>
+    </parent>
+    <artifactId>spring-boot-custom-rate-limiter-rest</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>spring-boot-custom-rate-limiter-rest</name>
+    <description>Demo project for Spring Boot REST api using the Custom Rate Limiter Starter</description>
+    <properties>
+        <java.version>17</java.version>
+        <rate.limiter.version>1.0</rate.limiter.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.spring.boot.rest</groupId>
+            <artifactId>spring-boot-starter-custom-rate-limiter</artifactId>
+            <version>${rate.limiter.version}</version>
+        </dependency>
+    </dependencies>
+</project>

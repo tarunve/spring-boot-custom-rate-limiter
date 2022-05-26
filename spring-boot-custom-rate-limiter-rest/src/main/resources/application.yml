@@ -1,0 +1,15 @@
+server:
+  port: 8000
+logging:
+  level:
+    root: info
+custom:
+  defaultRateLimit: 3
+  refreshTimeInterval: 60
+  rateLimits:
+    - user: default
+      uri:  /api/v1/developers
+      limit:  5
+    - user: test
+      uri: /api/v1/organizations
+      limit: 20
