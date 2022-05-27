@@ -1,21 +1,17 @@
 package com.spring.rest.interceptor;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.spring.rest.config.UserApiKeyConfig;
 import com.spring.rest.model.UserApiKey;
 
@@ -60,6 +56,6 @@ public class PerUserRateLimitInterceptorTest {
 		when(mockRequest.getUserPrincipal()).thenReturn(null);
 		when(mockRequest.getRequestURI()).thenReturn("/api/one");
 		boolean result = mockPerUserRateLimitInterceptor.preHandle(mockRequest, mockResponse, mockObjectHandler);
-		assertEquals(true, result);
+		assertTrue(result);
 	}
 }
