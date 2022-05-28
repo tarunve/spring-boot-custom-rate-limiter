@@ -37,26 +37,24 @@ public class UserApiKeyTest {
     public void testNullValues(){
         UserApiKey userApiKey = new UserApiKey(null, null);
         assertEquals(31*7*31 , userApiKey.hashCode());
+        assertEquals(false, userApiKey1.equals(userApiKey));
     }
 
     @Test
-    public void testEqualObjects(){
-        assertEquals(userApiKey1 , userApiKey2);
-    }
-
-    @Test
-    public void testEqualReferenceObjects(){
-        assertEquals(userApiKey1 , userApiKey1);
-    }
-
-    @Test
-    public void testNullObjects(){
-        UserApiKey userApiKey3 = null;
-        assertNotEquals(userApiKey1 , userApiKey3);
+    public void testEqualMethod(){
+    	UserApiKey userApiKey3 = new UserApiKey("tarun", null);
+    	UserApiKey userApiKey4 = new UserApiKey(null, "/api");
+    	
+    	assertEquals(true, userApiKey1.equals(userApiKey1));
+		assertEquals(false, userApiKey1.equals(null));
+		assertEquals(false, userApiKey1.equals(new Object()));
+		assertEquals(true, userApiKey1.equals(userApiKey2));
+        assertEquals(false, userApiKey1.equals(userApiKey3));
+        assertEquals(false, userApiKey1.equals(userApiKey4));
     }
 
     @Test
     public void testToString(){
-        assertNotEquals("tarun" , userApiKey1.toString());
+        assertEquals("tarun-/api" , userApiKey1.toString());
     }
 }
