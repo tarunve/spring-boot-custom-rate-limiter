@@ -6,14 +6,15 @@
         <groupId>com.spring.boot.rest</groupId>
         <artifactId>spring-boot-custom-rate-limiter</artifactId>
         <version>1.0</version>
-        <relativePath/>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>spring-boot-starter-custom-rate-limiter</artifactId>
     <version>1.0</version>
     <name>spring-boot-starter-custom-rate-limiter</name>
+    <packaging>jar</packaging>
     <description>Custom Rate Limiter Project based on User and API key combination</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>1.8</java.version>
     </properties>
     <dependencies>
         <dependency>

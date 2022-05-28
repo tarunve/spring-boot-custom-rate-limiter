@@ -1,55 +1,62 @@
 package com.spring.rest.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class UserApiKeyTest {
+	
+    private UserApiKey userApiKey1;
+    private UserApiKey userApiKey2;
 
-	@Test
-    public void testUserApiKeyParameterized() {
-        UserApiKey user1 = new UserApiKey("User1", "/api/one");
-        
-        assertEquals("User1", user1.getUser());
-        assertEquals("/api/one", user1.getUri());
-        assertEquals("User1-/api/one", user1.toString());
+    @BeforeEach
+    public void setup() {
+        userApiKey1 = new UserApiKey("tarun", "/api");
+        userApiKey2 = new UserApiKey("tarun", "/api");
     }
-	
-	@Test
-	public void testUserApiKeyNoParameterized() {
-		UserApiKey user = new UserApiKey();
-		assertNotNull(user);
-	}
-	
-	@Test
-	public void testUserApiKeyEqualsMethod() {
-		UserApiKey user1 = new UserApiKey("User1", "/api/one");
-        UserApiKey user2 = new UserApiKey("User2", "/api/two");
-        UserApiKey user3 = new UserApiKey("User2", "/api/two");
-        UserApiKey user4 = new UserApiKey("User2", "/api/four");
-        UserApiKey user5 = new UserApiKey("User5", "/api/two");
-        
-        assertEquals(true, user1.equals(user1));
-        assertEquals(false, user1.equals(user2));
-        assertEquals(true, user2.equals(user3));
-        assertEquals(false, user2.equals(user4));
-        assertEquals(false, user2.equals(user5));
-        assertEquals(false, user1.equals(null));
-        assertEquals(false, user1.equals(new Object()));
-	}
-	
-	@Test
-	public void testUserApiKeyHashCodeMethod() {
-		UserApiKey user1 = new UserApiKey(null, "/api/one");
-        UserApiKey user2 = new UserApiKey("User2", null);
-        UserApiKey user3 = new UserApiKey(null, null);
-        
-        assertNotNull(user1.hashCode());
-        assertNotNull(user2.hashCode());
-        assertNotNull(user3.hashCode());
-	}
+
+    @Test
+    public void testUserApiKey(){
+        assertEquals("tarun", userApiKey1.getUser());
+        assertNotEquals("/api/v1", userApiKey1.getUri());
+    }
+
+    @Test
+    public void testDefaultUserApiKey(){
+        UserApiKey userApiKey = new UserApiKey();
+        assertNull(userApiKey.getUser());
+    }
+
+    @Test
+    public void testNullValues(){
+        UserApiKey userApiKey = new UserApiKey(null, null);
+        assertEquals(31*7*31 , userApiKey.hashCode());
+    }
+
+    @Test
+    public void testEqualObjects(){
+        assertEquals(userApiKey1 , userApiKey2);
+    }
+
+    @Test
+    public void testEqualReferenceObjects(){
+        assertEquals(userApiKey1 , userApiKey1);
+    }
+
+    @Test
+    public void testNullObjects(){
+        UserApiKey userApiKey3 = null;
+        assertNotEquals(userApiKey1 , userApiKey3);
+    }
+
+    @Test
+    public void testToString(){
+        assertNotEquals("tarun" , userApiKey1.toString());
+    }
 }
