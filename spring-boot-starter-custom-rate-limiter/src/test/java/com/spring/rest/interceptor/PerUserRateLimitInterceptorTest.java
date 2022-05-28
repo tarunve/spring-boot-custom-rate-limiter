@@ -3,6 +3,7 @@ package com.spring.rest.interceptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.spring.rest.config.UserApiKeyConfig;
 import com.spring.rest.model.UserApiKey;
+
+import io.github.bucket4j.ConsumptionProbe;
 
 @ExtendWith(MockitoExtension.class)
 public class PerUserRateLimitInterceptorTest {
@@ -36,6 +39,9 @@ public class PerUserRateLimitInterceptorTest {
 	
 	@Mock
 	private Object mockObjectHandler;
+	
+	@Mock
+	private Principal mockPrincipal;
 	
 	@BeforeEach
 	public void setup() {
@@ -58,6 +64,15 @@ public class PerUserRateLimitInterceptorTest {
 	@Test
 	public void testPreHandleWithUserPrincipalNull() throws Exception {
 		when(mockRequest.getUserPrincipal()).thenReturn(null);
+		when(mockRequest.getRequestURI()).thenReturn("/api/one");
+		boolean result = mockPerUserRateLimitInterceptor.preHandle(mockRequest, mockResponse, mockObjectHandler);
+		assertEquals(true, result);
+	}
+	
+	@Test
+	public void testPreHandleWithUserPrincipalValue() throws Exception {
+		when(mockPrincipal.getName()).thenReturn("User1");
+		when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
 		when(mockRequest.getRequestURI()).thenReturn("/api/one");
 		boolean result = mockPerUserRateLimitInterceptor.preHandle(mockRequest, mockResponse, mockObjectHandler);
 		assertEquals(true, result);
