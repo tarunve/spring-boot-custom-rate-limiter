@@ -1,6 +1,7 @@
 package com.spring.rest.interceptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
@@ -19,8 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.spring.rest.config.UserApiKeyConfig;
 import com.spring.rest.model.UserApiKey;
-
-import io.github.bucket4j.ConsumptionProbe;
 
 @ExtendWith(MockitoExtension.class)
 public class PerUserRateLimitInterceptorTest {
@@ -66,7 +65,7 @@ public class PerUserRateLimitInterceptorTest {
 		when(mockRequest.getUserPrincipal()).thenReturn(null);
 		when(mockRequest.getRequestURI()).thenReturn("/api/one");
 		boolean result = mockPerUserRateLimitInterceptor.preHandle(mockRequest, mockResponse, mockObjectHandler);
-		assertEquals(true, result);
+		assertTrue(result);
 	}
 	
 	@Test
