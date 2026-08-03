@@ -13,7 +13,7 @@
     <name>spring-boot-custom-rate-limiter-rest</name>
     <description>Demo project for Spring Boot REST api using the Custom Rate Limiter Starter</description>
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <rate.limiter.version>1.0</rate.limiter.version>
     </properties>
     <dependencies>
