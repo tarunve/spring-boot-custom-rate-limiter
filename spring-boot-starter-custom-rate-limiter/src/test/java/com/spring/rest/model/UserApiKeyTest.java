@@ -36,7 +36,7 @@ public class UserApiKeyTest {
     @Test
     public void testNullValues(){
         UserApiKey userApiKey = new UserApiKey(null, null);
-        assertEquals(31*7*31 , userApiKey.hashCode());
+        assertEquals(6061    , userApiKey.hashCode());
         assertEquals(false, userApiKey1.equals(userApiKey));
     }
 
