@@ -7,6 +7,7 @@
         <groupId>io.github.tarunve</groupId>
         <artifactId>rate-limiter-parent</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>rate-limiter-spring-boot-starter</artifactId>
     <name>Rate Limiter Spring Boot Starter</name>
