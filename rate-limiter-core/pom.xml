@@ -7,6 +7,7 @@
         <groupId>io.github.tarunve</groupId>
         <artifactId>rate-limiter-parent</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>rate-limiter-core</artifactId>
     <name>Rate Limiter Core</name>
