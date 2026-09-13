@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rate-limiter-demo
+
+# ─────────────────────────────────────────────
+# Rate Limiter Configuration
+# ─────────────────────────────────────────────
+rate-limiter:
+  enabled: true
+  backend: IN_MEMORY          # Switch to REDIS for distributed deployments
+  default-limit: 100
+  default-duration: 60        # seconds
+
+  # Global interceptor rules — applied BEFORE the request reaches any controller.
+  # Rules are evaluated in order; the first matching pattern wins.
+  global-rules:
+    - pattern: /api/public/**
+      limit: 200
+      duration: 60
+    - pattern: /api/compute
+      limit: 10
+      duration: 60
+
+# ─────────────────────────────────────────────
+# Redis (only required when backend=REDIS)
+# ─────────────────────────────────────────────
+# spring:
+#   data:
+#     redis:
+#       host: localhost
+#       port: 6379
+#       password: ""          # set if auth is enabled
+
+# ─────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────
+logging:
+  level:
+    io.github.tarunve.ratelimiter: DEBUG
+    root: INFO
