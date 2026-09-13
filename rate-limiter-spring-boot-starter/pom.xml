@@ -4,12 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.github.tarunve</groupId>
-        <artifactId>rate-limiter-parent</artifactId>
-        <version>1.0.0</version>
+        <groupId>com.spring.boot.rest</groupId>
+        <artifactId>spring-boot-custom-rate-limiter</artifactId>
+        <version>1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+    <groupId>io.github.tarunve</groupId>
     <artifactId>rate-limiter-spring-boot-starter</artifactId>
+    <version>1.0.0</version>
     <name>Rate Limiter Spring Boot Starter</name>
     <description>Spring Boot Starter for distributed rate limiting - zero configuration needed</description>
 
@@ -17,6 +19,7 @@
         <dependency>
             <groupId>io.github.tarunve</groupId>
             <artifactId>rate-limiter-core</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
