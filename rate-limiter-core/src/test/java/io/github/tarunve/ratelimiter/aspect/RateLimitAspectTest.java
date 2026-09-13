@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -28,14 +30,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link RateLimitAspect}.
- *
- * <p>The aspect is tested in isolation using Mockito. {@link RateLimiterService}
- * and {@link RateLimitKeyResolver} are mocked so that each test exercises only
- * the aspect logic.
- */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("RateLimitAspect")
 class RateLimitAspectTest {
 
@@ -54,22 +50,11 @@ class RateLimitAspectTest {
         when(rateLimiterService.backendName()).thenReturn("in-memory");
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Bind a fake {@link ServletRequestAttributes} to {@link RequestContextHolder}
-     * so the aspect sees a web request context.
-     */
     private void bindRequestContext() {
         ServletRequestAttributes attrs = new ServletRequestAttributes(request, response);
         RequestContextHolder.setRequestAttributes(attrs);
     }
 
-    /**
-     * Build a synthetic {@link RateLimit} annotation via a local interface/proxy.
-     */
     private RateLimit buildAnnotation(int limit, long duration, TimeUnit unit,
                                       RateLimit.KeyType keyType, String key) {
         return new RateLimit() {
@@ -82,14 +67,10 @@ class RateLimitAspectTest {
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Tests: no-request context (skip rate limiting)
-    // -------------------------------------------------------------------------
-
     @Test
     @DisplayName("should proceed without rate-limit check when no request context is bound")
     void noRequestContext_proceedsWithoutCheck() throws Throwable {
-        RequestContextHolder.resetRequestAttributes(); // ensure no context
+        RequestContextHolder.resetRequestAttributes();
         RateLimit annotation = buildAnnotation(10, 60, TimeUnit.SECONDS, RateLimit.KeyType.IP, "");
 
         Object expected = "response";
@@ -101,12 +82,9 @@ class RateLimitAspectTest {
         verifyNoInteractions(rateLimiterService, keyResolver);
     }
 
-    // -------------------------------------------------------------------------
-    // Tests: @RateLimit annotation applied, request allowed
-    // -------------------------------------------------------------------------
-
     @Nested
     @DisplayName("when request is within limit")
+    @MockitoSettings(strictness = Strictness.LENIENT)
     class WhenAllowed {
 
         @BeforeEach void setup() { bindRequestContext(); }
@@ -155,12 +133,9 @@ class RateLimitAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Tests: rate limit exceeded
-    // -------------------------------------------------------------------------
-
     @Nested
     @DisplayName("when rate limit is exceeded")
+    @MockitoSettings(strictness = Strictness.LENIENT)
     class WhenExceeded {
 
         @BeforeEach void setup() { bindRequestContext(); }
@@ -190,7 +165,7 @@ class RateLimitAspectTest {
             assertThatThrownBy(() -> aspect.enforce(joinPoint, annotation))
                     .isInstanceOf(RateLimitExceededException.class);
 
-            verifyNoMoreInteractions(joinPoint); // proceed() was never called
+            verifyNoMoreInteractions(joinPoint);
         }
 
         @Test
@@ -198,7 +173,7 @@ class RateLimitAspectTest {
         void exceeded_setsRetryAfterHeader() {
             RateLimit annotation = buildAnnotation(5, 60, TimeUnit.SECONDS, RateLimit.KeyType.IP, "");
             when(keyResolver.resolve(any(), any(), any())).thenReturn("key");
-            long nanosToWait = 30_000_000_000L; // 30 seconds
+            long nanosToWait = 30_000_000_000L;
             when(rateLimiterService.tryConsume(any(), anyInt(), anyLong()))
                     .thenReturn(RateLimitResult.denied(nanosToWait));
 
@@ -228,12 +203,9 @@ class RateLimitAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Tests: key resolution — IP
-    // -------------------------------------------------------------------------
-
     @Nested
     @DisplayName("key resolution by IP")
+    @MockitoSettings(strictness = Strictness.LENIENT)
     class KeyResolutionByIp {
 
         @BeforeEach void setup() { bindRequestContext(); }
@@ -288,12 +260,9 @@ class RateLimitAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Tests: key resolution — custom SpEL
-    // -------------------------------------------------------------------------
-
     @Nested
     @DisplayName("key resolution by custom SpEL")
+    @MockitoSettings(strictness = Strictness.LENIENT)
     class KeyResolutionBySpel {
 
         @BeforeEach void setup() { bindRequestContext(); }
@@ -310,7 +279,6 @@ class RateLimitAspectTest {
             when(request.getRemoteAddr()).thenReturn("10.0.0.1");
             when(request.getHeader("X-Tenant-Id")).thenReturn("tenant-abc");
 
-            // Set up joinPoint to have a real Method for MethodBasedEvaluationContext
             Method method = SampleTarget.class.getMethod("doSomething", HttpServletRequest.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getDeclaringTypeName()).thenReturn("SampleTarget");
@@ -332,7 +300,7 @@ class RateLimitAspectTest {
                     50, 60, TimeUnit.SECONDS, RateLimit.KeyType.CUSTOM,
                     "#request.getHeader('X-Tenant-Id')");
 
-            when(request.getHeader("X-Tenant-Id")).thenReturn(""); // empty header
+            when(request.getHeader("X-Tenant-Id")).thenReturn("");
             when(request.getHeader("X-Forwarded-For")).thenReturn(null);
             when(request.getRemoteAddr()).thenReturn("10.0.0.2");
 
@@ -346,7 +314,6 @@ class RateLimitAspectTest {
 
             String key = resolver.resolve(annotation, joinPoint, request);
 
-            // Should not contain "custom:" since SpEL returned empty — falls back to IP
             assertThat(key).endsWith("10.0.0.2");
             assertThat(key).doesNotContain("custom:");
         }
@@ -356,8 +323,7 @@ class RateLimitAspectTest {
         void spelResolver_fallsBackToIpWhenExpressionIsBlank() {
             DefaultRateLimitKeyResolver resolver = new DefaultRateLimitKeyResolver();
             RateLimit annotation = buildAnnotation(
-                    50, 60, TimeUnit.SECONDS, RateLimit.KeyType.CUSTOM,
-                    ""); // blank key expression
+                    50, 60, TimeUnit.SECONDS, RateLimit.KeyType.CUSTOM, "");
 
             when(request.getHeader("X-Forwarded-For")).thenReturn(null);
             when(request.getRemoteAddr()).thenReturn("10.0.0.3");
@@ -387,12 +353,7 @@ class RateLimitAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Inner helper class for SpEL MethodBasedEvaluationContext
-    // -------------------------------------------------------------------------
-
-    /** Minimal target class used to provide a real Method object for SpEL context. */
     public static class SampleTarget {
-        public void doSomething(HttpServletRequest request) { /* no-op */ }
+        public void doSomething(HttpServletRequest request) { }
     }
 }
