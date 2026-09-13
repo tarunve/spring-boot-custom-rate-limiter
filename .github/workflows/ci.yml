@@ -6,6 +6,12 @@ on:
   push:
     branches: [main, master]
 
+# Minimal permissions following principle of least privilege
+permissions:
+  contents: read        # checkout code
+  pull-requests: write  # post comments on PRs
+  actions: read         # read workflow run details
+
 jobs:
   build:
     name: Build and Test
