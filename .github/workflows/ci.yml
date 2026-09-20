@@ -27,11 +27,20 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           cache: maven
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Build and test with Maven
         id: maven_build
         run: mvn clean verify --no-transfer-progress
         continue-on-error: true
+
+      - name: Publish to Sonatype Central
+        run: mvn clean deploy --batch-mode
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
       - name: Comment on PR if build failed
         if: steps.maven_build.outcome == 'failure' && github.event_name == 'pull_request'
