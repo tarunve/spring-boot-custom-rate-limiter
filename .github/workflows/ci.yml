@@ -7,9 +7,9 @@ on:
     branches: [main, master]
 
 permissions:
-  contents: read        # checkout code
-  pull-requests: write  # post comments on PRs
-  actions: read         # read workflow run details
+  contents: read
+  pull-requests: write
+  actions: read
 
 jobs:
   build:
@@ -18,47 +18,60 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4   # Uses stable v4 release
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5   # FIXED: Changed from v7 to the valid v5 release
+        uses: actions/setup-java@v5
         with:
           java-version: "17"
           distribution: "temurin"
           cache: maven
-          server-id: central
-          gpg-private-key: \${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: \${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Verify Java and Maven
+        run: |
+          java -version
+          mvn -version
 
       - name: Build and test with Maven
         id: maven_build
-        run: mvn clean verify --no-transfer-progress -Dgpg.skip=true
+        run: mvn clean verify --batch-mode --no-transfer-progress -Dgpg.skip=true
+
+      - name: Import GPG key
+        if: github.event_name == 'push' && steps.maven_build.outcome == 'success'
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Publish to Sonatype Central
         if: github.event_name == 'push' && steps.maven_build.outcome == 'success'
-        run: mvn clean deploy --batch-mode
+        run: mvn deploy --batch-mode --no-transfer-progress
         env:
-          MAVEN_GPG_PASSPHRASE: \${{ secrets.GPG_PASSPHRASE }}
-          MAVEN_USERNAME: \${{ secrets.SONATYPE_USERNAME }}
-          MAVEN_PASSWORD: \${{ secrets.SONATYPE_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
       - name: Comment on PR if build failed
         if: always() && steps.maven_build.outcome == 'failure' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7   # Uses stable v7 release
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ Build Failed\n\nThe dependency update caused a build/test failure. The **AI Fix Agent** has been triggered and will raise a fix PR shortly.\n\n[View failed run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`
+              body: `## ❌ Build Failed
+
+            The build or tests failed.
+
+            [View failed run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`
             })
 
       - name: Trigger AI Fix Agent on failure
         if: always() && steps.maven_build.outcome == 'failure' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7   # Uses stable v7 release
+        uses: actions/github-script@v7
         with:
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             await github.rest.repos.createDispatchEvent({
               owner: "tarunve",
