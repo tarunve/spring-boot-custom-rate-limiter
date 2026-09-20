@@ -2,7 +2,8 @@
 
   on:
     pull_request:
-      branches: ["**"]
+      branches:
+        - "**"
 
     push:
       branches:
@@ -16,8 +17,9 @@
     pull-requests: write
     actions: read
 
-  # Never allow two Maven Central publishing jobs
-  # to calculate/publish the same version simultaneously.
+  # Prevent two publishing jobs from running at the same time.
+  # This is important because both jobs could otherwise calculate
+  # the same incremental version.
   concurrency:
     group: maven-central-publishing
     cancel-in-progress: false
@@ -28,6 +30,7 @@
       runs-on: ubuntu-latest
 
       steps:
+
         # ==========================================================
         # CHECKOUT
         # ==========================================================
@@ -38,7 +41,7 @@
             fetch-tags: true
 
         # ==========================================================
-        # JAVA
+        # JAVA 17
         # ==========================================================
         - name: Set up JDK 17
           uses: actions/setup-java@v5
@@ -46,20 +49,32 @@
             java-version: "17"
             distribution: "temurin"
             cache: maven
+
+            # Maven Central credentials are written into
+            # ~/.m2/settings.xml by setup-java.
             server-id: central
             server-username: MAVEN_USERNAME
             server-password: MAVEN_PASSWORD
 
+        # ==========================================================
+        # VERIFY JAVA / MAVEN
+        # ==========================================================
         - name: Verify Java and Maven
           run: |
+            echo "Java version:"
             java -version
+            
+            echo ""
+            echo "Maven version:"
             mvn -version
 
         # ==========================================================
         # BUILD + TEST
         # ==========================================================
+        #
         # IMPORTANT:
-        # Nothing is published if this fails.
+        # Nothing is published if this step fails.
+        #
         - name: Build and test with Maven
           id: maven_build
           run: |
@@ -69,14 +84,43 @@
               -Dgpg.skip=true
 
         # ==========================================================
-        # DETERMINE PUBLISH VERSION
+        # DETERMINE VERSION
         # ==========================================================
+        #
+        # NORMAL PUSH:
+        #
+        # POM:
+        #   1.0.4
+        #
+        # Existing tags:
+        #   v1.0.4.1
+        #   v1.0.4.2
+        #
+        # Next version:
+        #   1.0.4.3
+        #
+        #
+        # OFFICIAL RELEASE:
+        #
+        # Git tag:
+        #   v1.0.5
+        #
+        # POM:
+        #   1.0.5
+        #
+        # Published version:
+        #   1.0.5
+        #
         - name: Determine publish version
           if: steps.maven_build.outcome == 'success' &&
-            (github.event_name == 'push')
+            github.event_name == 'push'
           id: version
           shell: bash
           run: |
+            
+            # ------------------------------------------------------
+            # Read version from Maven
+            # ------------------------------------------------------
             
             POM_VERSION=$(mvn help:evaluate \
               -Dexpression=project.version \
@@ -89,12 +133,14 @@
             
             # ------------------------------------------------------
             # OFFICIAL RELEASE
-            # Example:
-            # v1.0.5
             #
-            # Publishes exactly:
-            # 1.0.5
+            # Example:
+            #   v1.0.5
+            #
+            # Publishes:
+            #   1.0.5
             # ------------------------------------------------------
+            
             if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             
               RELEASE_VERSION="${GITHUB_REF_NAME#v}"
@@ -102,6 +148,7 @@
               echo "Release tag detected: ${GITHUB_REF_NAME}"
               echo "Release version: ${RELEASE_VERSION}"
             
+              # Make sure the tag version matches the POM version.
               if [[ "$RELEASE_VERSION" != "$POM_VERSION" ]]; then
                 echo "::error::Release tag ${RELEASE_VERSION} does not match POM version ${POM_VERSION}"
                 exit 1
@@ -111,30 +158,73 @@
               echo "release=true" >> "$GITHUB_OUTPUT"
             
             # ------------------------------------------------------
-            # NORMAL MAIN/MASTER PUSH
+            # NORMAL MAIN / MASTER PUSH
             #
             # Example:
-            # POM = 1.0.4
             #
-            # Existing tags:
-            # v1.0.4.1
-            # v1.0.4.2
-            # v1.0.4.3
+            # POM:
+            #   1.0.4
+            #
+            # Existing:
+            #   v1.0.4.1
+            #   v1.0.4.2
+            #   v1.0.4.3
             #
             # Next:
-            # 1.0.4.4
+            #   1.0.4.4
             # ------------------------------------------------------
+            
             else
             
               PREFIX="v${POM_VERSION}."
             
-              LATEST_SUFFIX=$(
-                git tag --list "${PREFIX}*" |
-                sed "s/^${PREFIX}//" |
-                grep -E '^[0-9]+$' |
-                sort -n |
-                tail -1
-              )
+              echo "Looking for existing tags matching:"
+              echo "${PREFIX}*"
+            
+              # Get all tags.
+              #
+              # '|| true' prevents the workflow from failing when
+              # there are no matching tags.
+              TAGS=$(git tag --list "${PREFIX}*" || true)
+            
+              LATEST_SUFFIX=""
+            
+              # ----------------------------------------------------
+              # Find highest numeric suffix.
+              #
+              # We intentionally do not use grep here because
+              # GitHub Actions runs bash with:
+              #
+              #   -e -o pipefail
+              #
+              # and grep returns exit code 1 when there are
+              # no matches.
+              # ----------------------------------------------------
+            
+              while IFS= read -r TAG; do
+            
+                # Ignore empty lines.
+                [ -z "$TAG" ] && continue
+            
+                SUFFIX="${TAG#${PREFIX}}"
+            
+                # Only accept numeric suffixes.
+                if [[ "$SUFFIX" =~ ^[0-9]+$ ]]; then
+            
+                  if [ -z "$LATEST_SUFFIX" ] || \
+                     [ "$SUFFIX" -gt "$LATEST_SUFFIX" ]; then
+            
+                    LATEST_SUFFIX="$SUFFIX"
+            
+                  fi
+            
+                fi
+            
+              done <<< "$TAGS"
+            
+              # ----------------------------------------------------
+              # Calculate next version.
+              # ----------------------------------------------------
             
               if [ -z "$LATEST_SUFFIX" ]; then
                 NEXT_SUFFIX=1
@@ -144,7 +234,7 @@
             
               NEW_VERSION="${POM_VERSION}.${NEXT_SUFFIX}"
             
-              echo "Latest CI version: ${LATEST_SUFFIX:-none}"
+              echo "Latest CI suffix: ${LATEST_SUFFIX:-none}"
               echo "Next CI version: ${NEW_VERSION}"
             
               echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
@@ -155,13 +245,19 @@
         # ==========================================================
         # SET MAVEN VERSION
         # ==========================================================
+        #
+        # This changes the version only in the GitHub Actions
+        # workspace. It does NOT commit the changed POM files.
+        #
         - name: Set publish version
           if: steps.maven_build.outcome == 'success' &&
             steps.version.outputs.new_version != ''
           run: |
+            
             NEW_VERSION="${{ steps.version.outputs.new_version }}"
             
-            echo "Setting Maven version to ${NEW_VERSION}"
+            echo "Setting Maven version to:"
+            echo "$NEW_VERSION"
             
             mvn versions:set \
               -DnewVersion="${NEW_VERSION}" \
@@ -169,6 +265,7 @@
               --batch-mode \
               --no-transfer-progress
             
+            echo ""
             echo "Final Maven version:"
             mvn help:evaluate \
               -Dexpression=project.version \
@@ -176,8 +273,11 @@
               -DforceStdout
 
         # ==========================================================
-        # IMPORT GPG
+        # IMPORT GPG KEY
         # ==========================================================
+        #
+        # Only import GPG for actual publishing.
+        #
         - name: Import GPG key
           if: steps.maven_build.outcome == 'success' &&
             github.event_name == 'push'
@@ -189,49 +289,73 @@
         # ==========================================================
         # PUBLISH TO MAVEN CENTRAL
         # ==========================================================
+        #
+        # This runs only after:
+        #
+        #   Build SUCCESS
+        #   Tests SUCCESS
+        #   Version calculated
+        #   GPG imported
+        #
         - name: Publish to Maven Central
           if: steps.maven_build.outcome == 'success' &&
             github.event_name == 'push'
           run: |
+            
             NEW_VERSION="${{ steps.version.outputs.new_version }}"
             
-            echo "Publishing version ${NEW_VERSION}"
+            echo "=========================================="
+            echo "Publishing Maven version: ${NEW_VERSION}"
+            echo "=========================================="
             
             mvn deploy \
               --batch-mode \
               --no-transfer-progress
+
           env:
             MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
             MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
             MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
         # ==========================================================
-        # CREATE CI VERSION TAG
+        # CREATE INCREMENTAL VERSION TAG
         # ==========================================================
-        # Only normal main/master pushes create the incremental tag.
+        #
+        # Only normal pushes create a new CI tag.
         #
         # Example:
-        # 1.0.4.1 → v1.0.4.1
         #
-        # Release tags do NOT create another tag.
+        # Maven version:
+        #   1.0.4.1
+        #
+        # Git tag:
+        #   v1.0.4.1
+        #
+        # Official release v1.0.5 already has its own tag,
+        # therefore we do NOT create another tag here.
+        #
         - name: Create CI version tag
           if: steps.maven_build.outcome == 'success' &&
             github.event_name == 'push' &&
             steps.version.outputs.release == 'false'
           run: |
+            
             NEW_VERSION="${{ steps.version.outputs.new_version }}"
             
-            echo "Creating tag v${NEW_VERSION}"
+            echo "Creating Git tag:"
+            echo "v${NEW_VERSION}"
             
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             
             git tag "v${NEW_VERSION}"
+            
             git push origin "v${NEW_VERSION}"
 
         # ==========================================================
         # PR FAILURE COMMENT
         # ==========================================================
+        #
         - name: Comment on PR if build failed
           if: always() &&
             steps.maven_build.outcome == 'failure' &&
@@ -254,6 +378,10 @@
         # ==========================================================
         # AI FIX AGENT
         # ==========================================================
+        #
+        # Keep this section only if your repository already uses
+        # github-daily-digest for the AI fix workflow.
+        #
         - name: Trigger AI Fix Agent on failure
           if: always() &&
             steps.maven_build.outcome == 'failure' &&
@@ -277,6 +405,10 @@
         # ==========================================================
         # FAIL JOB IF BUILD FAILED
         # ==========================================================
+        #
+        # Explicitly mark the workflow as failed.
+        #
         - name: Fail the job if build failed
-          if: always() && steps.maven_build.outcome == 'failure'
+          if: always() &&
+            steps.maven_build.outcome == 'failure'
           run: exit 1
