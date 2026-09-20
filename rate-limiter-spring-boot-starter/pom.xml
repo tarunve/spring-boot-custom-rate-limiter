@@ -4,14 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.spring.boot.rest</groupId>
+        <groupId>io.github.tarunve</groupId>
         <artifactId>spring-boot-custom-rate-limiter</artifactId>
-        <version>1.0</version>
+        <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>io.github.tarunve</groupId>
     <artifactId>rate-limiter-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
     <name>Rate Limiter Spring Boot Starter</name>
     <description>Spring Boot Starter for distributed rate limiting - zero configuration needed</description>
 
@@ -19,27 +17,7 @@
         <dependency>
             <groupId>io.github.tarunve</groupId>
             <artifactId>rate-limiter-core</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <!-- Redis - optional, auto-detected at runtime -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j-redis</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

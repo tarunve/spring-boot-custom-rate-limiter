@@ -3,27 +3,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.spring.boot.rest</groupId>
+        <groupId>io.github.tarunve</groupId>
         <artifactId>spring-boot-custom-rate-limiter</artifactId>
-        <version>1.0</version>
+        <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>spring-boot-starter-custom-rate-limiter</artifactId>
-    <version>1.0</version>
     <name>spring-boot-starter-custom-rate-limiter</name>
     <packaging>jar</packaging>
     <description>Custom Rate Limiter Project based on User and API key combination</description>
-    <properties>
-    </properties>
+
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j_jdk17-core</artifactId>
-            <version>8.19.0</version>
+            <groupId>io.github.tarunve</groupId>
+            <artifactId>rate-limiter-core</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

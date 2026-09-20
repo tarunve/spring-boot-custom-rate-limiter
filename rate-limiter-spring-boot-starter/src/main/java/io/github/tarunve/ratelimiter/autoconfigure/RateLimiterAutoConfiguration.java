@@ -31,7 +31,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *   enabled: false
  * }</pre>
  *
- * <h3>Bean registration summary</h3>
+ * <p><b>Bean registration summary</b></p>
  * <ul>
  *   <li>{@link RateLimitProperties} — bound to {@code rate-limiter.*}</li>
  *   <li>{@link RateLimitKeyResolver} — {@link DefaultRateLimitKeyResolver} unless overridden</li>

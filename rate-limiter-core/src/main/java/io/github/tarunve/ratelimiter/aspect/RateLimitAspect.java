@@ -21,7 +21,7 @@ import java.util.Objects;
  * AOP aspect that intercepts methods annotated with {@link RateLimit} and
  * enforces token-bucket rate limiting.
  *
- * <h3>Processing flow</h3>
+ * <p><b>Processing flow</b></p>
  * <ol>
  *   <li>Retrieve the current {@link HttpServletRequest} and {@link HttpServletResponse}
  *       from {@link RequestContextHolder}.</li>
