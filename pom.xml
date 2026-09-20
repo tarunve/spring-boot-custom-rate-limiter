@@ -31,7 +31,7 @@
         <lombok.version>1.18.36</lombok.version>
         <byte-buddy.version>1.18.11</byte-buddy.version>
         <bucket4j.version>8.10.1</bucket4j.version>
-        <revision>1.0.2</revision>
+        <revision>1.0.3</revision>
     </properties>
 
     <dependencies>
