@@ -161,7 +161,6 @@
                     <autoPublish>true</autoPublish>
                     <deploymentName>io.github.tarunve</deploymentName>
                     <publishingServerId>central</publishingServerId>
-                    <tokenAuth>true</tokenAuth>
                 </configuration>
             </plugin>
             <plugin>
